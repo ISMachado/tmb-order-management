@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (build + testes)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Build (avisos tratados como erro)
+        run: dotnet build Orders.slnx -c Release
+      # Os testes de integracao e golden usam Testcontainers (Docker ja disponivel no runner).
+      - name: Testes (unitarios + integracao + golden)
+        run: dotnet test Orders.slnx -c Release --no-build --logger "trx;LogFileName=results.trx"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: backend-test-results
+          path: backend/**/TestResults/*.trx
+
+  frontend:
+    name: Frontend (lint + tipos + testes + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  compose:
+    name: Docker Compose (sobe o ambiente e verifica a saude)
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env
+      - name: Sobe tudo e espera ficar saudavel
+        run: docker compose up -d --build --wait --wait-timeout 300
+      - name: Fluxo basico (criar pedido e ver Finalizado)
+        run: |
+          id=$(curl -fsS -X POST localhost:5080/orders -H 'Content-Type: application/json' \
+            -d '{"cliente":"CI","produto":"Teste","valor":10}' | python3 -c 'import sys,json;print(json.load(sys.stdin)["id"])')
+          for i in $(seq 1 20); do
+            status=$(curl -fsS localhost:5080/orders/$id | python3 -c 'import sys,json;print(json.load(sys.stdin)["status"])')
+            [ "$status" = "Finalizado" ] && echo "Pedido finalizado" && exit 0
+            sleep 1
+          done
+          echo "Pedido nao foi finalizado"; docker compose logs; exit 1
+      - if: always()
+        run: docker compose down -v

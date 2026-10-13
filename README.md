@@ -1,5 +1,7 @@
 # Sistema de Gestão de Pedidos
 
+[![CI](https://github.com/ISMachado/tmb-order-management/actions/workflows/ci.yml/badge.svg)](https://github.com/ISMachado/tmb-order-management/actions/workflows/ci.yml)
+
 Sistema de gestão de pedidos com **processamento assíncrono**: ao criar um pedido, a API grava no PostgreSQL e publica uma mensagem no RabbitMQ; um **worker** consome a mensagem, muda o status para **Processando** e, após 5 segundos, para **Finalizado**. O frontend mostra a mudança **em tempo real**. Há ainda um módulo de **IA** que responde perguntas em linguagem natural sobre os pedidos.
 
 > Desafio técnico TMB — .NET + React/Next.js + PostgreSQL.

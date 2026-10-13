@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+/* Tema escuro fixo, como o site da TMB (tmb.com.br). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: dark;
+  --background: #0e0e0e; /* TMB: --e-global-color-secondary */
+  --foreground: #ffffff;
+  --tmb-blue: #66baff; /* TMB: --e-global-color-accent */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Marca */
+  --color-tmb: #66baff;
+  --color-tmb-hover: #8acbff;
+
+  /* Neutros da TMB (pretos puros, sem o tom azulado do slate padrao). */
+  --color-slate-50: #f4f4f4;
+  --color-slate-100: #ededed;
+  --color-slate-200: #d4d4d4;
+  --color-slate-300: #a3a3a3;
+  --color-slate-400: #8d8d8d; /* TMB: cinza de texto secundario */
+  --color-slate-500: #8d8d8d;
+  --color-slate-600: #b3b3b3;
+  --color-slate-700: #2e2e2e;
+  --color-slate-800: #232323;
+  --color-slate-900: #161616; /* TMB: cards */
+  --color-slate-950: #000000; /* TMB: topo */
+
+  --font-sans: var(--font-archivo), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --animate-row-flash: row-flash 2.5s ease-out;
+
+  @keyframes row-flash {
+    0% {
+      background-color: rgb(102 186 255 / 0.28);
+    }
+    100% {
+      background-color: transparent;
+    }
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  /* Archivo "Expanded" (largura 125%) e a fonte da TMB. Corpo um pouco mais compacto para tabelas legiveis. */
+  font-stretch: 110%;
+}
+
+h1,
+h2,
+h3,
+.font-brand {
+  font-stretch: 125%;
+}
+
+/* Destaque de marca: barra azul sob a palavra, como no titulo do site da TMB. */
+.tmb-highlight {
+  padding-bottom: 0.1em;
+  display: inline-block;
+  background-image: linear-gradient(transparent 84%, var(--tmb-blue) 84%);
+  background-repeat: no-repeat;
+}
+
+::selection {
+  background: rgb(102 186 255 / 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-row-flash,
+  .animate-spin,
+  .animate-pulse {
+    animation: none !important;
+  }
+}

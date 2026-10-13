@@ -1,0 +1,204 @@
+# Ambiente completo com UM comando:  docker compose up -d --build
+# Ordem de subida garantida por healthchecks + depends_on:
+#   postgres/rabbitmq (healthy) -> migrator (concluido) -> api/worker (healthy) -> frontend
+
+name: orders
+
+x-backend-env: &backend-env
+  ConnectionStrings__OrdersDb: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+  RabbitMq__Host: rabbitmq
+  RabbitMq__Username: ${RABBITMQ_USER}
+  RabbitMq__Password: ${RABBITMQ_PASSWORD}
+  Processing__DelaySeconds: ${PROCESSING_DELAY_SECONDS:-5}
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+  OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
+  # Servico de execucao unica: aplica as migrations, cria o usuario somente leitura da IA e (opcional) o seed.
+  migrator:
+    build:
+      context: ./backend
+      target: migrator
+    environment:
+      ConnectionStrings__OrdersDb: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      ConnectionStrings__OrdersDbReadOnly: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${ORDERS_READONLY_USER};Password=${ORDERS_READONLY_PASSWORD}
+      Seed__Enabled: ${SEED_DEMO_DATA:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: ./backend
+      target: api
+    environment:
+      <<: *backend-env
+      ConnectionStrings__OrdersDbReadOnly: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${ORDERS_READONLY_USER};Password=${ORDERS_READONLY_PASSWORD}
+      Cors__AllowedOrigins__0: http://localhost:${FRONTEND_PORT:-3000}
+      Cors__AllowedOrigins__1: http://127.0.0.1:${FRONTEND_PORT:-3000}
+      Ai__ApiKey: ${ANTHROPIC_API_KEY:-}
+      Ai__Model: ${ANTHROPIC_MODEL:-claude-haiku-5-5}
+    ports:
+      - "${API_PORT:-5080}:8080"
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./backend
+      target: worker
+    environment:
+      <<: *backend-env
+    depends_on:
+      migrator:
+        condition: service_completed_successfully
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Enderecos acessados pelo NAVEGADOR (por isso localhost + porta publicada da API).
+        NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-5080}
+    environment:
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    restart: unless-stopped
+
+  pgadmin:
+    image: dpage/pgadmin4:9
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_CONFIG_CHECK_EMAIL_DELIVERABILITY: "False"
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    configs:
+      - source: pgadmin-servers
+        target: /pgadmin4/servers.json
+      - source: pgadmin-pgpass
+        target: /pgpass
+        uid: "5050"
+        gid: "5050"
+        mode: 0600
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:80/misc/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.76.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "${JAEGER_PORT:-16686}:16686"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:14269/"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+    restart: unless-stopped
+
+configs:
+  # Servidor ja cadastrado no pgAdmin: ao abrir, o banco "Orders" ja aparece, sem configurar nada.
+  pgadmin-servers:
+    content: |
+      {
+        "Servers": {
+          "1": {
+            "Name": "Orders (PostgreSQL)",
+            "Group": "Servers",
+            "Host": "postgres",
+            "Port": 5432,
+            "MaintenanceDB": "${POSTGRES_DB}",
+            "Username": "${POSTGRES_USER}",
+            "SSLMode": "prefer",
+            "PassFile": "/pgpass"
+          }
+        }
+      }
+  pgadmin-pgpass:
+    content: |
+      postgres:5432:*:${POSTGRES_USER}:${POSTGRES_PASSWORD}
+
+volumes:
+  postgres-data:
+  rabbitmq-data:
+  pgadmin-data:

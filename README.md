@@ -96,7 +96,7 @@ sequenceDiagram
 
     U->>F: Preenche o formulário
     F->>A: POST /orders (Idempotency-Key)
-    A->>D: BEGIN; INSERT orders (Pendente); INSERT history; INSERT outbox; COMMIT
+    A->>D: Transação: grava pedido (Pendente), histórico e outbox, e faz COMMIT
     A-->>F: 201 Created (status Pendente)
     R->>D: SELECT ... FOR UPDATE SKIP LOCKED
     R->>Q: Publica OrderCreated (CorrelationId = OrderId, publisher confirm)

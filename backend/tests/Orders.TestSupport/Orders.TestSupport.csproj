@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <NoWarn>$(NoWarn);CA1001</NoWarn>
+    <!-- Biblioteca de apoio (fixtures), nao contem testes: evita o dotnet test tentar executa-la. -->
+    <IsTestProject>false</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>

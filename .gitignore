@@ -1,0 +1,22 @@
+.env
+.env.*
+!.env.example
+**/bin/
+**/obj/
+node_modules/
+.next/
+.DS_Store
+*.user
+.idea/
+.vscode/
+TestResults/
+coverage/
+
+# Snapshots do Verify ainda nao aprovados
+*.received.*
+
+# Material pessoal de estudo para a entrevista (nao vai para o repositorio publico)
+contexto/
+
+# Gerado pelo `next dev` (texto para agentes de IA); nao faz parte do projeto
+AGENTS.md

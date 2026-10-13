@@ -1,0 +1,28 @@
+﻿{
+  cliente: Golden Detalhes,
+  data_atualizacao: DateTimeOffset_1,
+  data_criacao: DateTimeOffset_2,
+  finalizado_em: DateTimeOffset_1,
+  historico: [
+    {
+      alterado_em: DateTimeOffset_2,
+      status_anterior: null,
+      status_novo: Pendente
+    },
+    {
+      alterado_em: DateTimeOffset_3,
+      status_anterior: Pendente,
+      status_novo: Processando
+    },
+    {
+      alterado_em: DateTimeOffset_1,
+      status_anterior: Processando,
+      status_novo: Finalizado
+    }
+  ],
+  id: Guid_1,
+  processamento_iniciado_em: DateTimeOffset_3,
+  produto: Golden Produto,
+  status: Finalizado,
+  valor: 10.0
+}

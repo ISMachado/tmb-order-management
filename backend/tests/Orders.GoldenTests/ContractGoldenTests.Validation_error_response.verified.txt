@@ -1,0 +1,17 @@
+﻿{
+  errors: {
+    cliente: [
+      Informe o cliente.
+    ],
+    produto: [
+      Informe o produto.
+    ],
+    valor: [
+      O valor deve ser maior que zero.
+    ]
+  },
+  status: 400,
+  title: One or more validation errors occurred.,
+  trace_id: Guid_1,
+  type: https://tools.ietf.org/html/rfc9110#section-15.5.1
+}

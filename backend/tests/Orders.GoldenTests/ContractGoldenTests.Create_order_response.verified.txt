@@ -1,0 +1,11 @@
+﻿{
+  cliente: Golden Cliente,
+  data_atualizacao: DateTimeOffset_1,
+  data_criacao: DateTimeOffset_1,
+  finalizado_em: null,
+  id: Guid_1,
+  processamento_iniciado_em: null,
+  produto: Golden Produto,
+  status: Pendente,
+  valor: 1299.9
+}

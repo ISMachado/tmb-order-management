@@ -1,0 +1,13 @@
+﻿{
+  correlation_id: Guid_1,
+  data: {
+    cliente: Ana Souza,
+    data_criacao: DateTimeOffset_1,
+    order_id: Guid_1,
+    produto: Notebook Pro 14,
+    valor: 7899.9
+  },
+  event_type: OrderCreated,
+  message_id: Guid_2,
+  occurred_at: DateTimeOffset_1
+}

@@ -1,0 +1,239 @@
+﻿[
+  {
+    Description: Ultimo recurso: executa um SELECT somente leitura nas views de pedidos quando nenhuma outra ferramenta resolve a pergunta.,
+    Name: consulta_sql_somente_leitura,
+    Schema: {
+      properties: {
+        sql: {
+          description: Uma unica consulta SELECT usando somente as views vw_pedidos(id, cliente, produto, valor, status, data_criacao, data_atualizacao, processamento_iniciado_em, finalizado_em, segundos_ate_finalizar) e vw_historico_status(pedido_id, status_anterior, status_novo, alterado_em).,
+          type: string
+        }
+      },
+      required: [
+        sql
+      ],
+      type: object
+    }
+  },
+  {
+    Description: Conta quantos pedidos existem, com filtros opcionais de status e periodo.,
+    Name: contar_pedidos,
+    Schema: {
+      properties: {
+        campoData: {
+          default: null,
+          description: Qual data filtrar: 'criacao' (padrao) ou 'finalizacao'.,
+          type: [
+            string,
+            null
+          ]
+        },
+        dataFim: {
+          default: null,
+          description: Data final (yyyy-MM-dd), inclusiva.,
+          type: [
+            string,
+            null
+          ]
+        },
+        dataInicio: {
+          default: null,
+          description: Data inicial (yyyy-MM-dd), inclusiva. Use apenas se 'periodo' nao servir.,
+          type: [
+            string,
+            null
+          ]
+        },
+        periodo: {
+          default: null,
+          description: Periodo pre-definido: hoje, ontem, ultimos_7_dias, ultimos_30_dias, este_mes, mes_passado, este_ano ou todos.,
+          type: [
+            string,
+            null
+          ]
+        },
+        status: {
+          default: null,
+          description: Status do pedido: Pendente, Processando ou Finalizado. Omitir para contar todos.,
+          type: [
+            string,
+            null
+          ]
+        }
+      },
+      type: object
+    }
+  },
+  {
+    Description: Lista os pedidos mais recentes (ate 20) com id, cliente, produto, valor e status.,
+    Name: listar_pedidos,
+    Schema: {
+      properties: {
+        cliente: {
+          default: null,
+          description: Parte do nome do cliente.,
+          type: [
+            string,
+            null
+          ]
+        },
+        limite: {
+          default: null,
+          description: Maximo de pedidos a listar (1 a 20). Padrao 10.,
+          type: [
+            integer,
+            null
+          ]
+        },
+        periodo: {
+          default: null,
+          description: Periodo pre-definido: hoje, ontem, ultimos_7_dias, ultimos_30_dias, este_mes, mes_passado, este_ano ou todos.,
+          type: [
+            string,
+            null
+          ]
+        },
+        status: {
+          default: null,
+          description: Status do pedido: Pendente, Processando ou Finalizado.,
+          type: [
+            string,
+            null
+          ]
+        }
+      },
+      type: object
+    }
+  },
+  {
+    Description: Ranking dos clientes ou produtos com maior valor total de pedidos.,
+    Name: ranking,
+    Schema: {
+      properties: {
+        agrupar_por: {
+          description: 'cliente' ou 'produto'.,
+          type: string
+        },
+        limite: {
+          default: null,
+          description: Quantos itens retornar (1 a 20). Padrao 5.,
+          type: [
+            integer,
+            null
+          ]
+        },
+        periodo: {
+          default: null,
+          description: Periodo pre-definido: hoje, ontem, ultimos_7_dias, ultimos_30_dias, este_mes, mes_passado, este_ano ou todos.,
+          type: [
+            string,
+            null
+          ]
+        }
+      },
+      required: [
+        agrupar_por
+      ],
+      type: object
+    }
+  },
+  {
+    Description: Quantidade de pedidos e valor total agrupados por status.,
+    Name: resumo_por_status,
+    Schema: {
+      properties: {
+        periodo: {
+          default: null,
+          description: Periodo pre-definido: hoje, ontem, ultimos_7_dias, ultimos_30_dias, este_mes, mes_passado, este_ano ou todos.,
+          type: [
+            string,
+            null
+          ]
+        }
+      },
+      type: object
+    }
+  },
+  {
+    Description: Soma o valor (em reais) dos pedidos, com filtros opcionais de status e periodo.,
+    Name: somar_valor_pedidos,
+    Schema: {
+      properties: {
+        campoData: {
+          default: null,
+          description: Qual data filtrar: 'criacao' (padrao) ou 'finalizacao'. Para 'finalizados este mes' use 'finalizacao'.,
+          type: [
+            string,
+            null
+          ]
+        },
+        dataFim: {
+          default: null,
+          description: Data final (yyyy-MM-dd), inclusiva.,
+          type: [
+            string,
+            null
+          ]
+        },
+        dataInicio: {
+          default: null,
+          description: Data inicial (yyyy-MM-dd), inclusiva.,
+          type: [
+            string,
+            null
+          ]
+        },
+        periodo: {
+          default: null,
+          description: Periodo pre-definido: hoje, ontem, ultimos_7_dias, ultimos_30_dias, este_mes, mes_passado, este_ano ou todos.,
+          type: [
+            string,
+            null
+          ]
+        },
+        status: {
+          default: null,
+          description: Status do pedido: Pendente, Processando ou Finalizado. Omitir para somar todos.,
+          type: [
+            string,
+            null
+          ]
+        }
+      },
+      type: object
+    }
+  },
+  {
+    Description: Tempo medio, minimo e maximo (em segundos) entre a criacao e a finalizacao dos pedidos finalizados. Responde 'qual o tempo medio para aprovar/finalizar os pedidos'.,
+    Name: tempo_medio_processamento,
+    Schema: {
+      properties: {
+        dataFim: {
+          default: null,
+          description: Data final (yyyy-MM-dd), inclusiva.,
+          type: [
+            string,
+            null
+          ]
+        },
+        dataInicio: {
+          default: null,
+          description: Data inicial (yyyy-MM-dd), inclusiva.,
+          type: [
+            string,
+            null
+          ]
+        },
+        periodo: {
+          default: null,
+          description: Periodo pre-definido: hoje, ontem, ultimos_7_dias, ultimos_30_dias, este_mes, mes_passado, este_ano ou todos.,
+          type: [
+            string,
+            null
+          ]
+        }
+      },
+      type: object
+    }
+  }
+]

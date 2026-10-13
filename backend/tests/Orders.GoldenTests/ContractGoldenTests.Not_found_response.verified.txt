@@ -1,0 +1,6 @@
+﻿{
+  detail: Nao existe pedido com id Guid_1.,
+  status: 404,
+  title: Pedido nao encontrado,
+  type: https://tools.ietf.org/html/rfc9110#section-15.5.5
+}

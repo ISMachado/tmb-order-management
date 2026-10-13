@@ -1,0 +1,12 @@
+﻿{
+  correlation_id: Guid_1,
+  data: {
+    alterado_em: DateTimeOffset_1,
+    order_id: Guid_1,
+    status_anterior: Pendente,
+    status_novo: Processando
+  },
+  event_type: OrderStatusChanged,
+  message_id: Guid_2,
+  occurred_at: DateTimeOffset_1
+}

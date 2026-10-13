@@ -1,0 +1,17 @@
+﻿{
+  entries: {
+    postgresql: {
+      status: Healthy,
+      tags: [
+        ready
+      ]
+    },
+    rabbitmq: {
+      status: Healthy,
+      tags: [
+        ready
+      ]
+    }
+  },
+  status: Healthy
+}
